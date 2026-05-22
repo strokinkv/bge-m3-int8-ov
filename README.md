@@ -25,12 +25,8 @@ base_model: BAAI/bge-m3
 ### Install
 
 ```bash
-# For conversion:
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r scripts/requirements.txt
-
-# For inference only (pre-converted model):
-pip install openvino transformers
 ```
 
 ### Download and convert
