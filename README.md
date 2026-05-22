@@ -32,7 +32,7 @@ pip install -r scripts/requirements.txt
 ### Download and convert
 
 ```bash
-optimum-cli export openvino --model BAAI/bge-m3 --library transformers --task feature-extraction --trust-remote-code --weight-format int8 models/bge-m3-int8-ov
+optimum-cli export openvino --model BAAI/bge-m3 --task feature-extraction --weight-format int8 models/bge-m3-int8-ov
 ```
 
 ### Test
