@@ -49,13 +49,14 @@ jobs:
         if: success()
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_REPO: ${{ secrets.HF_REPO }}
         run: |
           python -c "
           from huggingface_hub import HfApi, create_repo
           import os
 
           api = HfApi(token=os.environ['HF_TOKEN'])
-          repo_id = os.environ.get('HF_REPO', 'bge-m3-openvino')
+          repo_id = os.environ.get('HF_REPO', 'strokinkv/bge-m3-int8-ov')
 
           create_repo(repo_id=repo_id, exist_ok=True, token=os.environ['HF_TOKEN'])
 
