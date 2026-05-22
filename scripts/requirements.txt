@@ -2,6 +2,7 @@ huggingface_hub>=0.23
 nncf>=2.14
 numpy>=1.26
 onnx>=1.16
+onnxscript>=0.1
 openvino>=2025.0
 transformers>=4.40
 sentencepiece
