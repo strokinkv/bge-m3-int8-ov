@@ -1,0 +1,66 @@
+name: Convert and Publish to Hugging Face
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('scripts/requirements.txt') }}
+          restore-keys: pip-${{ runner.os }}-
+
+      - name: Cache Hugging Face models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-${{ runner.os }}-bge-m3-${{ github.run_id }}
+          restore-keys: hf-${{ runner.os }}-bge-m3-
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Export to ONNX
+        run: python scripts/export_onnx.py --output models/onnx
+
+      - name: Convert to OpenVINO IR
+        run: python scripts/convert_openvino.py --source models/onnx --output models/bge-m3-openvino-int8
+
+      - name: Test model
+        run: python scripts/test_model.py --model-dir models/bge-m3-openvino-int8
+
+      - name: Upload to Hugging Face
+        if: success()
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python -c "
+          from huggingface_hub import HfApi, create_repo
+          import os
+
+          api = HfApi(token=os.environ['HF_TOKEN'])
+          repo_id = os.environ.get('HF_REPO', 'bge-m3-openvino')
+
+          create_repo(repo_id=repo_id, exist_ok=True, token=os.environ['HF_TOKEN'])
+
+          api.upload_folder(
+              folder_path='models/bge-m3-openvino-int8',
+              repo_id=repo_id,
+              repo_type='model',
+          )
+          print(f'Published to https://huggingface.co/{repo_id}')
+          "
