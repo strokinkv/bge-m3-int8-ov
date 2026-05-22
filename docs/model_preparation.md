@@ -8,6 +8,7 @@ This document describes how to convert the [BAAI/bge-m3](https://huggingface.co/
 - pip
 
 ```bash
+pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r scripts/requirements.txt
 ```
 

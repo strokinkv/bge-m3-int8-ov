@@ -3,7 +3,6 @@ nncf>=2.14
 numpy>=1.26
 onnx>=1.16
 openvino>=2025.0
-torch>=2.2
 transformers>=4.40
 sentencepiece
 tokenizers>=0.19

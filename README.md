@@ -7,6 +7,7 @@
 ### Install
 
 ```bash
+pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r scripts/requirements.txt
 ```
 

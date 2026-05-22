@@ -32,7 +32,9 @@ jobs:
           restore-keys: hf-${{ runner.os }}-bge-m3-
 
       - name: Install dependencies
-        run: pip install -r scripts/requirements.txt
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r scripts/requirements.txt
 
       - name: Export to ONNX
         run: python scripts/export_onnx.py --output models/onnx
