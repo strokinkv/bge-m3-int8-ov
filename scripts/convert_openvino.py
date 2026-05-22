@@ -18,7 +18,7 @@ TOKENIZER_FILES = [
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Convert ONNX BGE-M3 to static INT8 OpenVINO IR.")
     parser.add_argument("--source", type=Path, default=Path("models/onnx"), help="Directory with model.onnx and tokenizer files.")
-    parser.add_argument("--output", type=Path, default=Path("models/bge-m3-openvino-int8"), help="Output directory.")
+    parser.add_argument("--output", type=Path, default=Path("models/bge-m3-int8-ov"), help="Output directory.")
     parser.add_argument("--batch-size", type=int, default=1)
     parser.add_argument("--max-length", type=int, default=512)
     parser.add_argument("--mode", choices=["int8_asym", "int8_sym"], default="int8_asym", help="NNCF weight compression mode.")

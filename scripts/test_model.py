@@ -9,7 +9,7 @@ from transformers import AutoTokenizer
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate BGE-M3 OpenVINO IR model.")
-    parser.add_argument("--model-dir", type=Path, default=Path("models/bge-m3-openvino-int8"))
+    parser.add_argument("--model-dir", type=Path, default=Path("models/bge-m3-int8-ov"))
     parser.add_argument("--device", default="CPU")
     return parser.parse_args()
 
@@ -31,36 +31,38 @@ def main() -> None:
         "BGE M3 is an embedding model.",
     ]
 
-    encoded = tokenizer(
-        texts,
-        return_tensors="np",
-        padding="max_length",
-        truncation=True,
-        max_length=512,
-    )
-    input_ids = encoded["input_ids"].astype(np.int64)
-    attention_mask = encoded["attention_mask"].astype(np.int64)
-
     core = ov.Core()
     compiled = core.compile_model(model_xml, args.device)
 
-    inputs = {
-        "input_ids": input_ids,
-        "attention_mask": attention_mask,
-    }
-    available_inputs = {inp.get_any_name() for inp in compiled.inputs}
-    inputs = {k: v for k, v in inputs.items() if k in available_inputs}
+    embeddings = []
+    for text in texts:
+        encoded = tokenizer(
+            text,
+            return_tensors="np",
+            padding="max_length",
+            truncation=True,
+            max_length=512,
+        )
+        input_ids = encoded["input_ids"].astype(np.int64)
+        attention_mask = encoded["attention_mask"].astype(np.int64)
 
-    result = compiled(inputs)
+        inputs = {
+            "input_ids": input_ids,
+            "attention_mask": attention_mask,
+        }
+        available_inputs = {inp.get_any_name() for inp in compiled.inputs}
+        inputs = {k: v for k, v in inputs.items() if k in available_inputs}
 
-    outputs_by_name = {out.get_any_name(): result[out] for out in compiled.outputs}
-    embedding = outputs_by_name.get("sentence_embedding")
-    if embedding is None:
-        output_name, embedding = next(iter(outputs_by_name.items()))
-        print(f"WARNING: 'sentence_embedding' not found, using '{output_name}'")
-        output_name_str = output_name
-    else:
-        output_name_str = "sentence_embedding"
+        result = compiled(inputs)
+
+        outputs_by_name = {out.get_any_name(): result[out] for out in compiled.outputs}
+        emb = outputs_by_name.get("sentence_embedding")
+        if emb is None:
+            _, emb = next(iter(outputs_by_name.items()))
+        embeddings.append(emb[0])
+
+    embedding = np.stack(embeddings, axis=0)
+    output_name_str = "sentence_embedding"
 
     errors = []
 

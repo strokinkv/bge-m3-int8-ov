@@ -15,13 +15,13 @@ pip install -r scripts/requirements.txt
 
 ```bash
 python scripts/export_onnx.py --output models/onnx
-python scripts/convert_openvino.py --source models/onnx --output models/bge-m3-openvino-int8
+python scripts/convert_openvino.py --source models/onnx --output models/bge-m3-int8-ov
 ```
 
 ### Test
 
 ```bash
-python scripts/test_model.py --model-dir models/bge-m3-openvino-int8
+python scripts/test_model.py --model-dir models/bge-m3-int8-ov
 ```
 
 ### Use
@@ -32,8 +32,8 @@ import numpy as np
 from transformers import AutoTokenizer
 
 core = ov.Core()
-model = core.compile_model("models/bge-m3-openvino-int8/model.xml", "CPU")
-tokenizer = AutoTokenizer.from_pretrained("models/bge-m3-openvino-int8")
+model = core.compile_model("models/bge-m3-int8-ov/model.xml", "CPU")
+tokenizer = AutoTokenizer.from_pretrained("models/bge-m3-int8-ov")
 
 text = "What is BGE M3?"
 encoded = tokenizer(text, return_tensors="np", padding="max_length", truncation=True, max_length=512)

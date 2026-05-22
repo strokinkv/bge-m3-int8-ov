@@ -37,14 +37,14 @@ Outputs: `model.onnx`, tokenizer files (`tokenizer.json`, `config.json`, etc.)
 Converts ONNX model to OpenVINO IR and applies NNCF INT8 asymmetric weight compression.
 
 ```bash
-python scripts/convert_openvino.py --source models/onnx --output models/bge-m3-openvino-int8
+python scripts/convert_openvino.py --source models/onnx --output models/bge-m3-int8-ov
 ```
 
 Arguments:
 | Arg | Default | Description |
 |-----|---------|-------------|
 | `--source` | `models/onnx` | Directory with `model.onnx` |
-| `--output` | `models/bge-m3-openvino-int8` | Output directory |
+| `--output` | `models/bge-m3-int8-ov` | Output directory |
 | `--batch-size` | `1` | Static batch dimension |
 | `--max-length` | `512` | Static sequence length |
 | `--mode` | `int8_asym` | NNCF compression mode (`int8_asym` or `int8_sym`) |
@@ -56,21 +56,21 @@ Outputs: `model.xml`, `model.bin`, tokenizer files
 Validates the converted model by running inference on CPU and checking output shape, dtype, and embedding quality.
 
 ```bash
-python scripts/test_model.py --model-dir models/bge-m3-openvino-int8
+python scripts/test_model.py --model-dir models/bge-m3-int8-ov
 ```
 
 Arguments:
 | Arg | Default | Description |
 |-----|---------|-------------|
-| `--model-dir` | `models/bge-m3-openvino-int8` | Model bundle directory |
+| `--model-dir` | `models/bge-m3-int8-ov` | Model bundle directory |
 | `--device` | `CPU` | OpenVINO device (CPU, GPU, NPU) |
 
 ### One-liner
 
 ```bash
 python scripts/export_onnx.py --output models/onnx && \
-python scripts/convert_openvino.py --source models/onnx --output models/bge-m3-openvino-int8 && \
-python scripts/test_model.py --model-dir models/bge-m3-openvino-int8
+python scripts/convert_openvino.py --source models/onnx --output models/bge-m3-int8-ov && \
+python scripts/test_model.py --model-dir models/bge-m3-int8-ov
 ```
 
 ## Model Signature

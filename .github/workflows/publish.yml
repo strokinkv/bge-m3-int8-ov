@@ -40,10 +40,10 @@ jobs:
         run: python scripts/export_onnx.py --output models/onnx
 
       - name: Convert to OpenVINO IR
-        run: python scripts/convert_openvino.py --source models/onnx --output models/bge-m3-openvino-int8
+        run: python scripts/convert_openvino.py --source models/onnx --output models/bge-m3-int8-ov
 
       - name: Test model
-        run: python scripts/test_model.py --model-dir models/bge-m3-openvino-int8
+        run: python scripts/test_model.py --model-dir models/bge-m3-int8-ov
 
       - name: Upload to Hugging Face
         if: success()
@@ -60,7 +60,7 @@ jobs:
           create_repo(repo_id=repo_id, exist_ok=True, token=os.environ['HF_TOKEN'])
 
           api.upload_folder(
-              folder_path='models/bge-m3-openvino-int8',
+              folder_path='models/bge-m3-int8-ov',
               repo_id=repo_id,
               repo_type='model',
           )
