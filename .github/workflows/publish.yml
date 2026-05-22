@@ -35,7 +35,7 @@ jobs:
           pip install -r scripts/requirements.txt
 
       - name: Convert to OpenVINO IR
-        run: optimum-cli export openvino --model BAAI/bge-m3 --task feature-extraction --weight-format int8 models/bge-m3-int8-ov
+        run: optimum-cli export openvino -m BAAI/bge-m3 --task feature-extraction --weight-format int8 models/bge-m3-int8-ov
 
       - name: Test model
         run: python scripts/test_model.py --model-dir models/bge-m3-int8-ov
