@@ -17,9 +17,9 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
-    model_xml = args.model_dir / "model.xml"
+    model_xml = args.model_dir / "openvino_model.xml"
     if not model_xml.exists():
-        model_xml = args.model_dir / "openvino_model.xml"
+        model_xml = args.model_dir / "model.xml"
     if not model_xml.exists():
         print(f"ERROR: model.xml not found in {args.model_dir}")
         sys.exit(1)
@@ -39,7 +39,7 @@ def main() -> None:
         encoded = tokenizer(
             text,
             return_tensors="np",
-            padding="max_length",
+            padding=True,
             truncation=True,
             max_length=512,
         )
@@ -56,10 +56,11 @@ def main() -> None:
         result = compiled(inputs)
 
         outputs_by_name = {out.get_any_name(): result[out] for out in compiled.outputs}
-        emb = outputs_by_name.get("sentence_embedding")
-        if emb is None:
-            _, emb = next(iter(outputs_by_name.items()))
-        embeddings.append(emb[0])
+        emb_raw = outputs_by_name.get("sentence_embedding") or outputs_by_name.get("last_hidden_state")
+        if emb_raw is None:
+            _, emb_raw = next(iter(outputs_by_name.items()))
+        emb = emb_raw[0, 0] if emb_raw.ndim == 3 else emb_raw[0]
+        embeddings.append(emb)
 
     embedding = np.stack(embeddings, axis=0)
     output_name_str = "sentence_embedding"

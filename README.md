@@ -25,28 +25,18 @@ base_model: BAAI/bge-m3
 ### Install
 
 ```bash
-pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r scripts/requirements.txt
 ```
 
 ### Download and convert
 
 ```bash
-python scripts/export_onnx.py --output models/onnx
-python scripts/convert_openvino.py --source models/onnx --output models/bge-m3-int8-ov
+optimum-cli export openvino --model BAAI/bge-m3 --task feature-extraction --weight-format int8 models/bge-m3-int8-ov
 ```
 
 ### Test
 
 ```bash
-python scripts/test_model.py --model-dir models/bge-m3-int8-ov
-```
-
-### One-liner
-
-```bash
-python scripts/export_onnx.py --output models/onnx && \
-python scripts/convert_openvino.py --source models/onnx --output models/bge-m3-int8-ov && \
 python scripts/test_model.py --model-dir models/bge-m3-int8-ov
 ```
 
@@ -58,57 +48,21 @@ import numpy as np
 from transformers import AutoTokenizer
 
 core = ov.Core()
-model = core.compile_model("models/bge-m3-int8-ov/model.xml", "CPU")
+model = core.compile_model("models/bge-m3-int8-ov/openvino_model.xml", "CPU")
 tokenizer = AutoTokenizer.from_pretrained("models/bge-m3-int8-ov")
 
 text = "What is BGE M3?"
-encoded = tokenizer(text, return_tensors="np", padding="max_length", truncation=True, max_length=512)
+encoded = tokenizer(text, return_tensors="np", padding=True, truncation=True, max_length=512)
 result = model({"input_ids": encoded["input_ids"].astype(np.int64), "attention_mask": encoded["attention_mask"].astype(np.int64)})
-embedding = result["sentence_embedding"]  # shape: [1, 1024]
-print(embedding.shape)
+last_hidden = result["last_hidden_state"]
+embedding = last_hidden[0, 0, :]  # CLS token = sentence embedding, shape: [1024]
 ```
-
-## Pipeline
-
-| Step | Script | Input | Output |
-|------|--------|-------|--------|
-| 1. ONNX export | `export_onnx.py` | `BAAI/bge-m3` from Hugging Face | `model.onnx` [1,512] |
-| 2. OpenVINO + INT8 | `convert_openvino.py` | `model.onnx` | `model.xml`/`model.bin` INT8 |
-| 3. Validation | `test_model.py` | OpenVINO IR | Shape, dtype, L2-norm check |
-
-### Step 1: export_onnx.py
-
-| Arg | Default | Description |
-|-----|---------|-------------|
-| `--model-id` | `BAAI/bge-m3` | Hugging Face model ID |
-| `--output` | `models/onnx` | Output directory |
-| `--batch-size` | `1` | Static batch dimension |
-| `--max-length` | `512` | Static sequence length |
-
-### Step 2: convert_openvino.py
-
-| Arg | Default | Description |
-|-----|---------|-------------|
-| `--source` | `models/onnx` | Directory with `model.onnx` |
-| `--output` | `models/bge-m3-int8-ov` | Output directory |
-| `--batch-size` | `1` | Static batch dimension |
-| `--max-length` | `512` | Static sequence length |
-| `--mode` | `int8_asym` | NNCF compression mode (`int8_asym` or `int8_sym`) |
-
-### Step 3: test_model.py
-
-| Arg | Default | Description |
-|-----|---------|-------------|
-| `--model-dir` | `models/bge-m3-int8-ov` | Model bundle directory |
-| `--device` | `CPU` | OpenVINO device (CPU, GPU, NPU) |
 
 ## Project Structure
 
 ```
 bge-m3-openvino/
 ├── scripts/
-│   ├── export_onnx.py            # PyTorch → ONNX
-│   ├── convert_openvino.py       # ONNX → OpenVINO IR + INT8 NNCF
 │   ├── test_model.py             # Model validation
 │   └── requirements.txt
 ├── .github/workflows/
@@ -126,28 +80,28 @@ bge-m3-openvino/
 | Target model | [bge-m3-int8-ov](https://huggingface.co/strokinkv/bge-m3-int8-ov) |
 | Base model | [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3) |
 | License | MIT |
-| Input shape | [1, 512] (static) |
+| Input shape | dynamic |
 | Input names | `input_ids` (int64), `attention_mask` (int64) |
-| Output | `sentence_embedding` [1, 1024] float32 |
+| Output | `last_hidden_state` [batch, seq, 1024] float32 |
+| Sentence embedding | CLS token: `last_hidden_state[:, 0, :]` → [1024] |
 | Quantization | INT8 asymmetric (NNCF) |
 | Embedding dim | 1024 |
-| Max length | 512 tokens |
+| Max length | 8192 tokens (original model limit) |
 
 ## Model Signature
 
 | Direction | Name | Shape | Type |
 |-----------|------|-------|------|
-| Input | `input_ids` | [1, 512] | int64 |
-| Input | `attention_mask` | [1, 512] | int64 |
-| Output | `token_embeddings` | [1, 512, 1024] | float32 |
-| Output | `sentence_embedding` | [1, 1024] | float32 |
+| Input | `input_ids` | [batch, seq] | int64 |
+| Input | `attention_mask` | [batch, seq] | int64 |
+| Output | `last_hidden_state` | [batch, seq, 1024] | float32 |
 
 ## Bundle Files
 
 | File | Description |
 |------|-------------|
-| `model.xml` | OpenVINO IR graph |
-| `model.bin` | OpenVINO IR weights (INT8, ~543 MB) |
+| `openvino_model.xml` | OpenVINO IR graph |
+| `openvino_model.bin` | OpenVINO IR weights (INT8, ~543 MB) |
 | `tokenizer.json` | Hugging Face tokenizer |
 | `tokenizer_config.json` | Tokenizer configuration |
 | `sentencepiece.bpe.model` | SentencePiece model |
