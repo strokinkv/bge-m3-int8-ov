@@ -23,7 +23,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, default=Path("models/onnx"), help="Output directory.")
     parser.add_argument("--batch-size", type=int, default=1)
     parser.add_argument("--max-length", type=int, default=512)
-    parser.add_argument("--opset", type=int, default=15, help="ONNX opset version.")
     return parser.parse_args()
 
 
@@ -37,6 +36,7 @@ def main() -> None:
     model.eval()
 
     wrapper = BgeM3OnnxWrapper(model)
+    wrapper.eval()
     batch = args.batch_size
     length = args.max_length
 
@@ -52,7 +52,6 @@ def main() -> None:
         input_names=["input_ids", "attention_mask"],
         output_names=["token_embeddings", "sentence_embedding"],
         dynamic_axes={},
-        opset_version=args.opset,
         do_constant_folding=True,
     )
     print(f"Saved {onnx_path}")
