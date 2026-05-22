@@ -1,6 +1,8 @@
 # BGE-M3 OpenVINO
 
-[BGE-M3](https://huggingface.co/BAAI/bge-m3) embedding model converted to OpenVINO IR with INT8 quantization. Optimized for Intel NPU/CPU/GPU inference.
+[Русская версия](README.ru.md)
+
+[BGE-M3](https://huggingface.co/BAAI/bge-m3) embedding model converted to OpenVINO IR with INT8 quantization.
 
 ## Quick Start
 
