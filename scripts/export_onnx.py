@@ -1,8 +1,17 @@
 import argparse
+import shutil
 from pathlib import Path
 
 import torch
+from huggingface_hub import hf_hub_download
 from transformers import AutoModel, AutoTokenizer
+
+
+EXTRA_FILES = [
+    "config.json",
+    "sentencepiece.bpe.model",
+    "special_tokens_map.json",
+]
 
 
 class BgeM3OnnxWrapper(torch.nn.Module):
@@ -57,6 +66,17 @@ def main() -> None:
     print(f"Saved {onnx_path}")
 
     tokenizer.save_pretrained(args.output)
+    model.config.save_pretrained(args.output)
+
+    for fname in EXTRA_FILES:
+        local = args.output / fname
+        if not local.exists():
+            try:
+                path = hf_hub_download(repo_id=args.model_id, filename=fname)
+                shutil.copy2(path, local)
+            except Exception:
+                pass
+
     print(f"Tokenizer files saved to {args.output}")
 
 
