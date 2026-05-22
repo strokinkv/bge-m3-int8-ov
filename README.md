@@ -109,6 +109,7 @@ bge-m3-openvino/
 
 | Property | Value |
 |----------|-------|
+| Target model | [bge-m3-int8-ov](https://huggingface.co/strokinkv/bge-m3-int8-ov) |
 | Base model | [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3) |
 | License | MIT |
 | Input shape | [1, 512] (static) |
@@ -139,34 +140,13 @@ bge-m3-openvino/
 | `special_tokens_map.json` | Special token mappings |
 | `config.json` | XLM-RoBERTa model config |
 
-## CI/CD
-
-On push to `main`, GitHub Actions automatically:
-
-1. Downloads `BAAI/bge-m3` from Hugging Face
-2. Exports to ONNX
-3. Converts to OpenVINO IR with INT8 quantization
-4. Runs validation tests
-5. Publishes the model bundle to Hugging Face
-
-### Required Secrets
-
-Set in **Settings > Secrets and variables > Actions**:
-
-| Secret | Description |
-|--------|-------------|
-| `HF_TOKEN` | Hugging Face token with write access |
-| `HF_REPO` | Target repo (e.g. `your-username/bge-m3-int8-ov`) |
-
-### Manual Trigger
-
-**Actions > Convert and Publish to Hugging Face > Run workflow**.
-
 ## References
 
+- [strokinkv/bge-m3-int8-ov](https://huggingface.co/strokinkv/bge-m3-int8-ov)
 - [Original model](https://huggingface.co/BAAI/bge-m3)
 - [BGE-M3 paper](https://arxiv.org/abs/2402.03216)
+- [ai2npu — NPU inference](https://github.com/strokinkv/ai2npu)
 
-## Attribution
+## License
 
-Converted version of [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3) by Beijing Academy of Artificial Intelligence, MIT license.
+MIT. Original model by [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3), Beijing Academy of Artificial Intelligence.

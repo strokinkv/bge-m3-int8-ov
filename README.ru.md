@@ -49,6 +49,7 @@ print(embedding.shape)
 
 | Свойство | Значение |
 |----------|----------|
+| Целевая модель | [strokinkv/bge-m3-int8-ov](https://huggingface.co/strokinkv/bge-m3-int8-ov) |
 | Базовая модель | [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3) |
 | Лицензия | MIT |
 | Входная форма | [1, 512] (статическая) |
@@ -121,29 +122,6 @@ bge-m3-openvino/
 └── README.ru.md                  # Русский
 ```
 
-## CI/CD
-
-При пуше в ветку `main` GitHub Actions автоматически:
-
-1. Загружает оригинальную модель `BAAI/bge-m3` с Hugging Face
-2. Экспортирует в ONNX
-3. Конвертирует в OpenVINO IR с INT8-квантизацией
-4. Запускает тесты
-5. Публикует бандл модели на Hugging Face
-
-### Необходимые секреты
-
-Настройте в репозитории GitHub **Settings → Secrets and variables → Actions**:
-
-| Секрет | Описание |
-|--------|----------|
-| `HF_TOKEN` | Токен Hugging Face с правами записи |
-| `HF_REPO` | Целевой репозиторий (например, `your-username/bge-m3-int8-ov`) |
-
-### Ручной запуск
-
-**Actions → Convert and Publish to Hugging Face → Run workflow**.
-
 ## Состав бандла
 
 | Файл | Описание |
@@ -170,7 +148,7 @@ bge-m3-openvino/
 MIT. Оригинальная модель — [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3), Beijing Academy of Artificial Intelligence.
 
 ## Ссылки
-
+- [strokinkv/bge-m3-int8-ov](https://huggingface.co/strokinkv/bge-m3-int8-ov)
 - [Оригинальная модель](https://huggingface.co/BAAI/bge-m3)
 - [Статья BGE-M3](https://arxiv.org/abs/2402.03216)
-- [ai2npu — NPU инференс на C++](https://github.com/...)
+- [ai2npu — NPU инференс](https://github.com/storkinkv/ai2npu)
