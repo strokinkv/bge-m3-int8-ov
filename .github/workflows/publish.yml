@@ -1,8 +1,6 @@
 name: Convert and Publish to Hugging Face
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
