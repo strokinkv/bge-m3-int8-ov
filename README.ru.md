@@ -7,8 +7,12 @@
 ### Установка
 
 ```bash
+# Для конвертации:
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r scripts/requirements.txt
+
+# Только для инференса (готовая модель):
+pip install openvino transformers
 ```
 
 ### Загрузка и конвертация
