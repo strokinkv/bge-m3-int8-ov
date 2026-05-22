@@ -1,19 +1,8 @@
 import argparse
-import json
-import shutil
 from pathlib import Path
 
 import torch
 from transformers import AutoModel, AutoTokenizer
-
-
-TOKENIZER_FILES = [
-    "config.json",
-    "sentencepiece.bpe.model",
-    "special_tokens_map.json",
-    "tokenizer.json",
-    "tokenizer_config.json",
-]
 
 
 class BgeM3OnnxWrapper(torch.nn.Module):
@@ -67,15 +56,6 @@ def main() -> None:
         do_constant_folding=True,
     )
     print(f"Saved {onnx_path}")
-
-    for file_name in TOKENIZER_FILES:
-        source_file = tokenizer.vocab_files.get(file_name) or tokenizer.init_kwargs.get(file_name)
-        if source_file and Path(source_file).exists():
-            shutil.copy2(source_file, args.output / file_name)
-        else:
-            src = Path(tokenizer.name_or_path) / file_name
-            if src.exists():
-                shutil.copy2(src, args.output / file_name)
 
     tokenizer.save_pretrained(args.output)
     print(f"Tokenizer files saved to {args.output}")
