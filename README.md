@@ -1,3 +1,19 @@
+---
+language: en
+license: mit
+library_name: openvino
+tags:
+- openvino
+- int8
+- embedding
+- bge-m3
+- sentence-similarity
+- feature-extraction
+- nncf
+pipeline_tag: feature-extraction
+base_model: BAAI/bge-m3
+---
+
 # BGE-M3 OpenVINO
 
 [Русская версия](README.ru.md)
@@ -97,8 +113,6 @@ bge-m3-openvino/
 │   └── requirements.txt
 ├── .github/workflows/
 │   └── publish.yml               # CI/CD
-├── docs/
-│   └── model_preparation.md      # Detailed documentation
 ├── .gitignore
 ├── LICENSE                       # MIT
 ├── README.md                     # English
