@@ -68,6 +68,40 @@ print(embedding.shape)
 | 2. OpenVINO + INT8 | `convert_openvino.py` | `model.onnx` | `model.xml`/`model.bin` INT8 |
 | 3. Тестирование | `test_model.py` | OpenVINO IR | Проверка формы, dtype, L2-нормы |
 
+### Шаг 1: export_onnx.py
+
+| Аргумент | По умолчанию | Описание |
+|----------|-------------|----------|
+| `--model-id` | `BAAI/bge-m3` | ID модели на Hugging Face |
+| `--output` | `models/onnx` | Выходная директория |
+| `--batch-size` | `1` | Статический размер батча |
+| `--max-length` | `512` | Статическая длина последовательности |
+
+### Шаг 2: convert_openvino.py
+
+| Аргумент | По умолчанию | Описание |
+|----------|-------------|----------|
+| `--source` | `models/onnx` | Директория с `model.onnx` |
+| `--output` | `models/bge-m3-int8-ov` | Выходная директория |
+| `--batch-size` | `1` | Статический размер батча |
+| `--max-length` | `512` | Статическая длина последовательности |
+| `--mode` | `int8_asym` | Режим NNCF (`int8_asym` или `int8_sym`) |
+
+### Шаг 3: test_model.py
+
+| Аргумент | По умолчанию | Описание |
+|----------|-------------|----------|
+| `--model-dir` | `models/bge-m3-int8-ov` | Директория с моделью |
+| `--device` | `CPU` | Устройство OpenVINO (CPU, GPU, NPU) |
+
+### Одной командой
+
+```bash
+python scripts/export_onnx.py --output models/onnx && \
+python scripts/convert_openvino.py --source models/onnx --output models/bge-m3-int8-ov && \
+python scripts/test_model.py --model-dir models/bge-m3-int8-ov
+```
+
 ## Структура проекта
 
 ```

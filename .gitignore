@@ -21,6 +21,9 @@ models/
 *.xml
 *.bin
 
+# Docs (design artifacts, generated during development)
+docs/
+
 # IDE
 .vscode/
 .idea/
