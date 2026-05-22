@@ -7,13 +7,14 @@
 ### Установка
 
 ```bash
+pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r scripts/requirements.txt
 ```
 
 ### Загрузка и конвертация
 
 ```bash
-optimum-cli export openvino --model BAAI/bge-m3 --task feature-extraction --weight-format int8 models/bge-m3-int8-ov
+optimum-cli export openvino --model BAAI/bge-m3 --library transformers --task feature-extraction --trust-remote-code --weight-format int8 models/bge-m3-int8-ov
 ```
 
 ### Тестирование
