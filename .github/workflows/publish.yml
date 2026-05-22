@@ -49,6 +49,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_REPO: ${{ secrets.HF_REPO }}
         run: |
+          cp README.md models/bge-m3-int8-ov/README.md
           python -c "
           from huggingface_hub import HfApi, create_repo
           import os
