@@ -32,7 +32,8 @@ pip install -r scripts/requirements.txt
 ### Download and convert
 
 ```bash
-optimum-cli export openvino --model BAAI/bge-m3 --task feature-extraction --weight-format int8 models/bge-m3-int8-ov
+python scripts/export_onnx.py --output models/onnx
+python scripts/convert_openvino.py --source models/onnx --output models/bge-m3-int8-ov
 ```
 
 ### Test
@@ -49,26 +50,34 @@ import numpy as np
 from transformers import AutoTokenizer
 
 core = ov.Core()
-model = core.compile_model("models/bge-m3-int8-ov/openvino_model.xml", "CPU")
+model = core.compile_model("models/bge-m3-int8-ov/model.xml", "CPU")
 tokenizer = AutoTokenizer.from_pretrained("models/bge-m3-int8-ov")
 
 text = "What is BGE M3?"
-encoded = tokenizer(text, return_tensors="np", padding=True, truncation=True, max_length=512)
+encoded = tokenizer(text, return_tensors="np", padding="max_length", truncation=True, max_length=512)
 result = model({"input_ids": encoded["input_ids"].astype(np.int64), "attention_mask": encoded["attention_mask"].astype(np.int64)})
-last_hidden = result["last_hidden_state"]
-embedding = last_hidden[0, 0, :]  # CLS token = sentence embedding, shape: [1024]
+embedding = result["sentence_embedding"]  # shape: [1, 1024]
 ```
+
+## NPU compatibility
+
+OpenVINO IR supports dynamic input shapes, but Intel NPU compilation currently requires static input shapes. The direct `optimum-cli export openvino` pipeline produced unbounded `[-1, -1]` inputs: the model worked on CPU but NPU compilation failed with `ov_core_compile_model failed with status -1`.
+
+This project therefore exports BGE-M3 through a static ONNX graph and converts it to an INT8 OpenVINO IR with fixed `[1, 512]` inputs. The graph also exposes the CLS token directly as `sentence_embedding [1, 1024]`, so ai2npu does not need to reshape the model or post-process `last_hidden_state`.
 
 ## Project Structure
 
 ```
 bge-m3-openvino/
 ├── scripts/
+│   ├── export_onnx.py            # PyTorch → static ONNX
+│   ├── convert_openvino.py       # ONNX → OpenVINO IR + INT8 NNCF
 │   ├── test_model.py             # Model validation
 │   └── requirements.txt
 ├── .github/workflows/
 │   └── publish.yml               # CI/CD
 ├── .gitignore
+├── CHANGELOG.md
 ├── LICENSE                       # MIT
 ├── README.md                     # English
 └── README.ru.md                  # Russian
@@ -81,28 +90,28 @@ bge-m3-openvino/
 | Target model | [bge-m3-int8-ov](https://huggingface.co/strokinkv/bge-m3-int8-ov) |
 | Base model | [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3) |
 | License | MIT |
-| Input shape | dynamic |
+| Input shape | [1, 512] (static) |
 | Input names | `input_ids` (int64), `attention_mask` (int64) |
-| Output | `last_hidden_state` [batch, seq, 1024] float32 |
-| Sentence embedding | CLS token: `last_hidden_state[:, 0, :]` → [1024] |
+| Output | `sentence_embedding` [1, 1024] float32 |
 | Quantization | INT8 asymmetric (NNCF) |
 | Embedding dim | 1024 |
-| Max length | 8192 tokens (original model limit) |
+| Max length | 512 tokens |
 
 ## Model Signature
 
 | Direction | Name | Shape | Type |
 |-----------|------|-------|------|
-| Input | `input_ids` | [batch, seq] | int64 |
-| Input | `attention_mask` | [batch, seq] | int64 |
-| Output | `last_hidden_state` | [batch, seq, 1024] | float32 |
+| Input | `input_ids` | [1, 512] | int64 |
+| Input | `attention_mask` | [1, 512] | int64 |
+| Output | `token_embeddings` | [1, 512, 1024] | float32 |
+| Output | `sentence_embedding` | [1, 1024] | float32 |
 
 ## Bundle Files
 
 | File | Description |
 |------|-------------|
-| `openvino_model.xml` | OpenVINO IR graph |
-| `openvino_model.bin` | OpenVINO IR weights (INT8, ~543 MB) |
+| `model.xml` | Static OpenVINO IR graph |
+| `model.bin` | OpenVINO IR weights (INT8, ~543 MB) |
 | `tokenizer.json` | Hugging Face tokenizer |
 | `tokenizer_config.json` | Tokenizer configuration |
 | `sentencepiece.bpe.model` | SentencePiece model |

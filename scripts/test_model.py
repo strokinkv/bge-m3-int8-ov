@@ -17,9 +17,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
-    model_xml = args.model_dir / "openvino_model.xml"
-    if not model_xml.exists():
-        model_xml = args.model_dir / "model.xml"
+    model_xml = args.model_dir / "model.xml"
     if not model_xml.exists():
         print(f"ERROR: model.xml not found in {args.model_dir}")
         sys.exit(1)
@@ -31,15 +29,50 @@ def main() -> None:
         "BGE M3 is an embedding model.",
     ]
 
+    errors = []
     core = ov.Core()
-    compiled = core.compile_model(model_xml, args.device)
+    model = core.read_model(model_xml)
+
+    expected_input_shapes = {
+        "input_ids": [1, 512],
+        "attention_mask": [1, 512],
+    }
+    actual_input_shapes = {}
+    for model_input in model.inputs:
+        partial_shape = model_input.get_partial_shape()
+        actual_input_shapes[model_input.get_any_name()] = (
+            list(model_input.get_shape()) if partial_shape.is_static else str(partial_shape)
+        )
+    if actual_input_shapes != expected_input_shapes:
+        errors.append(
+            f"Input shapes mismatch: got {actual_input_shapes}, expected {expected_input_shapes}"
+        )
+
+    output_shapes = {
+        output.get_any_name(): list(output.get_shape())
+        for output in model.outputs
+        if output.get_partial_shape().is_static
+    }
+    if output_shapes.get("sentence_embedding") != [1, 1024]:
+        errors.append(
+            "sentence_embedding shape mismatch: "
+            f"got {output_shapes.get('sentence_embedding')}, expected [1, 1024]"
+        )
+
+    if errors:
+        print("VALIDATION FAILED:")
+        for error in errors:
+            print(f"  - {error}")
+        sys.exit(1)
+
+    compiled = core.compile_model(model, args.device)
 
     embeddings = []
     for text in texts:
         encoded = tokenizer(
             text,
             return_tensors="np",
-            padding=True,
+            padding="max_length",
             truncation=True,
             max_length=512,
         )
@@ -55,17 +88,9 @@ def main() -> None:
 
         result = compiled(inputs)
 
-        outputs_by_name = {out.get_any_name(): result[out] for out in compiled.outputs}
-        emb_raw = outputs_by_name.get("sentence_embedding") or outputs_by_name.get("last_hidden_state")
-        if emb_raw is None:
-            _, emb_raw = next(iter(outputs_by_name.items()))
-        emb = emb_raw[0, 0] if emb_raw.ndim == 3 else emb_raw[0]
-        embeddings.append(emb)
+        embeddings.append(result["sentence_embedding"][0])
 
     embedding = np.stack(embeddings, axis=0)
-    output_name_str = "sentence_embedding"
-
-    errors = []
 
     expected_shape = (2, 1024)
     if embedding.shape != expected_shape:
@@ -90,7 +115,7 @@ def main() -> None:
         sys.exit(1)
 
     print(f"device={args.device}")
-    print(f"output_name={output_name_str}")
+    print("output_name=sentence_embedding")
     print(f"output_shape={list(embedding.shape)}")
     print(f"output_dtype={embedding.dtype}")
     print(f"l2_norms={[float(n) for n in norms]}")

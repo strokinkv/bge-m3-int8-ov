@@ -34,8 +34,11 @@ jobs:
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -r scripts/requirements.txt
 
+      - name: Export to ONNX
+        run: python scripts/export_onnx.py --output models/onnx
+
       - name: Convert to OpenVINO IR
-        run: optimum-cli export openvino -m BAAI/bge-m3 --task feature-extraction --weight-format int8 models/bge-m3-int8-ov
+        run: python scripts/convert_openvino.py --source models/onnx --output models/bge-m3-int8-ov
 
       - name: Test model
         run: python scripts/test_model.py --model-dir models/bge-m3-int8-ov
@@ -61,6 +64,7 @@ jobs:
               folder_path='models/bge-m3-int8-ov',
               repo_id=repo_id,
               repo_type='model',
+              delete_patterns=['openvino_model.xml', 'openvino_model.bin'],
           )
           print(f'Published to https://huggingface.co/{repo_id}')
           "
